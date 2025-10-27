@@ -16,7 +16,11 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 # Importar funções do banco de dados
-from Minha_autopecas_web.logica_banco import (
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from Minha_auto_pecas.logica_banco import (
     init_db, criar_usuario_admin, verificar_usuario, buscar_usuario_por_id,
     buscar_usuario_por_email, atualizar_senha_usuario,
     criar_usuario, listar_usuarios, editar_usuario, deletar_usuario, verificar_permissao,
