@@ -1,0 +1,445 @@
+/* 
+ * SISTEMA ERP AUTO PEÇAS - SUPORTE MOBILE
+ * Otimizações específicas para dispositivos móveis
+ */
+
+/* === MEDIA QUERIES MOBILE === */
+
+/* Smartphones (portrait e landscape) */
+@media (max-width: 768px) {
+    
+    /* === SIDEBAR MOBILE === */
+    .sidebar {
+        position: fixed !important;
+        z-index: 1050 !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 280px !important;
+        max-width: 80% !important;
+        height: 100vh !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .sidebar.show {
+        transform: translateX(0) !important;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Melhorar legibilidade no menu mobile */
+    .sidebar .nav-link {
+        padding: 12px 15px !important;
+        font-size: 0.95rem !important;
+        margin: 2px 10px !important;
+    }
+
+    .sidebar .nav-link i {
+        margin-right: 10px !important;
+        width: 18px !important;
+        font-size: 1rem !important;
+    }
+
+    .sidebar .brand-section {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: linear-gradient(180deg, var(--primary-dark) 0%, var(--neutral-dark) 100%);
+    }
+
+    /* === MAIN CONTENT MOBILE === */
+    .main-content {
+        width: 100% !important;
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+    .col-md-9, .col-lg-10 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        padding: 0 !important;
+    }
+
+    /* === NAVBAR MOBILE === */
+    .top-navbar {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 1030 !important;
+        padding: 10px 8px !important;
+        min-height: auto !important;
+    }
+
+    .navbar-brand {
+        font-size: 1rem !important;
+        margin-left: 10px !important;
+        flex-grow: 1;
+    }
+
+    .navbar-brand::before {
+        display: none; /* Remover emoji em mobile para economizar espaço */
+    }
+
+    .navbar-nav {
+        font-size: 0.85rem !important;
+        flex-wrap: wrap;
+    }
+
+    .navbar-nav .navbar-text {
+        margin: 2px 5px !important;
+        padding: 2px 5px !important;
+    }
+
+    /* Ajustar data no navbar mobile */
+    .navbar-nav .navbar-text i {
+        font-size: 0.9rem;
+    }
+
+    /* === BOTÃO MENU HAMBÚRGUER === */
+    .navbar-toggler-mobile {
+        display: block !important;
+        background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-red) 100%);
+        border: none;
+        padding: 8px 12px;
+        border-radius: 8px;
+        color: white;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(255, 109, 0, 0.3);
+    }
+
+    .navbar-toggler-mobile:active {
+        transform: scale(0.95);
+    }
+
+    /* === OVERLAY === */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1040;
+        backdrop-filter: blur(2px);
+    }
+
+    .sidebar-overlay.show {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* === CARDS MOBILE === */
+    .card {
+        margin-bottom: 12px !important;
+        border-radius: 12px !important;
+    }
+
+    .card-header {
+        padding: 10px 12px !important;
+        font-size: 0.95rem !important;
+    }
+
+    .card-body {
+        padding: 12px !important;
+    }
+
+    /* Dashboard cards em mobile */
+    .dashboard-card {
+        margin-bottom: 10px;
+    }
+
+    .dashboard-card .card-body {
+        padding: 12px !important;
+    }
+
+    .dashboard-card h3 {
+        font-size: 1.3rem !important;
+    }
+
+    .dashboard-card p {
+        font-size: 0.85rem !important;
+    }
+
+    .dashboard-card .fa-3x {
+        font-size: 1.8rem !important;
+    }
+
+    /* === TABELAS MOBILE === */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+    }
+
+    .table {
+        font-size: 0.85rem;
+        margin-bottom: 0;
+    }
+
+    .table th,
+    .table td {
+        padding: 8px 6px !important;
+        white-space: nowrap;
+    }
+
+    .table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--primary-dark);
+    }
+
+    /* === BOTÕES MOBILE === */
+    .btn {
+        padding: 8px 14px !important;
+        font-size: 0.9rem !important;
+        margin: 3px !important;
+    }
+
+    .btn-lg {
+        padding: 10px 18px !important;
+        font-size: 1rem !important;
+    }
+
+    .btn-sm {
+        padding: 5px 10px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Botões de ação em cards */
+    .card .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    /* === FORMULÁRIOS MOBILE === */
+    .form-control,
+    .form-select {
+        font-size: 16px !important; /* Prevenir zoom no iOS */
+        padding: 10px 12px !important;
+    }
+
+    .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+
+    .input-group {
+        flex-wrap: nowrap;
+    }
+
+    /* === MODAIS MOBILE === */
+    .modal-dialog {
+        margin: 10px !important;
+        max-width: calc(100% - 20px) !important;
+    }
+
+    .modal-content {
+        border-radius: 12px !important;
+    }
+
+    .modal-header {
+        padding: 12px 15px !important;
+    }
+
+    .modal-body {
+        padding: 15px !important;
+    }
+
+    .modal-footer {
+        padding: 10px 15px !important;
+    }
+
+    /* === ALERTS MOBILE === */
+    .alert {
+        padding: 10px 12px !important;
+        font-size: 0.9rem !important;
+        margin-bottom: 10px !important;
+    }
+
+    /* === BADGES E STATUS === */
+    .badge-status {
+        padding: 6px 12px !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* === CONTAINER MOBILE === */
+    .container-fluid {
+        padding: 8px !important;
+    }
+
+    .row {
+        margin-left: -4px !important;
+        margin-right: -4px !important;
+    }
+
+    .row > * {
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+    }
+
+    /* === GRID RESPONSIVO === */
+    .col,
+    [class*="col-"] {
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+    }
+
+    /* Cards em grid mobile */
+    .row.g-4 {
+        --bs-gutter-x: 0.5rem;
+        --bs-gutter-y: 0.5rem;
+    }
+
+    /* === ESPAÇAMENTOS MOBILE === */
+    .mb-3 {
+        margin-bottom: 10px !important;
+    }
+
+    .mb-4 {
+        margin-bottom: 12px !important;
+    }
+
+    .mt-3 {
+        margin-top: 10px !important;
+    }
+
+    .mt-4 {
+        margin-top: 12px !important;
+    }
+
+    .p-3 {
+        padding: 10px !important;
+    }
+
+    .p-4 {
+        padding: 12px !important;
+    }
+
+    /* === MELHORIAS DE TOQUE === */
+    .btn,
+    .nav-link,
+    a {
+        -webkit-tap-highlight-color: rgba(255, 109, 0, 0.2);
+        touch-action: manipulation;
+    }
+
+    /* Aumentar área de toque para links pequenos */
+    .table a,
+    .btn-sm {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* === SCROLL SUAVE === */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* === PRODUTOS E VENDAS === */
+    .automotive-product-card {
+        margin-bottom: 15px !important;
+    }
+
+    .automotive-product-card .product-image {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 1.5rem !important;
+    }
+
+    /* === PERFORMANCE === */
+    * {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Otimizar animações em mobile */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
+/* === TABLETS (portrait) === */
+@media (min-width: 577px) and (max-width: 768px) {
+    .sidebar {
+        width: 300px !important;
+    }
+
+    .navbar-brand {
+        font-size: 1.1rem !important;
+    }
+
+    .card-body {
+        padding: 15px !important;
+    }
+}
+
+/* === LANDSCAPE MOBILE === */
+@media (max-height: 500px) and (orientation: landscape) {
+    .sidebar {
+        height: 100vh !important;
+        overflow-y: auto !important;
+    }
+
+    .sidebar .brand-section {
+        padding: 8px !important;
+        margin: 5px !important;
+    }
+
+    .sidebar .brand-icon {
+        display: none; /* Economizar espaço vertical */
+    }
+
+    .navbar-brand h4 {
+        font-size: 1rem !important;
+    }
+}
+
+/* === DESKTOP (esconder elementos mobile) === */
+@media (min-width: 769px) {
+    .navbar-toggler-mobile {
+        display: none !important;
+    }
+
+    .sidebar-overlay {
+        display: none !important;
+    }
+
+    .sidebar {
+        transform: translateX(0) !important;
+        position: relative !important;
+    }
+}
+
+/* === IMPRESSÃO === */
+@media print {
+    .sidebar,
+    .navbar-toggler-mobile,
+    .sidebar-overlay,
+    .top-navbar,
+    .btn {
+        display: none !important;
+    }
+
+    .main-content {
+        width: 100% !important;
+    }
+}

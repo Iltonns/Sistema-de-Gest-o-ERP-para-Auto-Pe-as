@@ -98,6 +98,7 @@ body.layout-compacto .mb-4 {
     }
 }
 
+
 @media (min-width: 992px) {
     body.layout-compacto .col-lg-2 {
         width: 12% !important;
@@ -105,6 +106,40 @@ body.layout-compacto .mb-4 {
     
     body.layout-compacto .col-lg-10 {
         width: 88% !important;
+    }
+}
+
+/* === SUPORTE MOBILE === */
+@media (max-width: 768px) {
+    /* Desabilitar layout compacto em mobile */
+    body.layout-compacto {
+        font-size: 1rem !important;
+    }
+
+    /* Sidebar sempre full width em mobile */
+    body.layout-compacto .sidebar {
+        width: 280px !important;
+        max-width: 80% !important;
+    }
+
+    /* Restaurar tamanhos normais em mobile */
+    body.layout-compacto .sidebar .nav-link {
+        padding: 12px 15px !important;
+        font-size: 0.95rem !important;
+    }
+
+    /* Cards dashboard tamanho normal em mobile */
+    body.layout-compacto .dashboard-card {
+        min-height: auto !important;
+    }
+
+    body.layout-compacto .dashboard-card .card-body {
+        padding: 15px !important;
+    }
+
+    /* Esconder botão de toggle em mobile - não faz sentido */
+    .layout-toggle {
+        display: none !important;
     }
 }
 

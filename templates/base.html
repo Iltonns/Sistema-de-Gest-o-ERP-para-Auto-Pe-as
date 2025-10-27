@@ -17,6 +17,8 @@ simele <!DOCTYPE html>
     <link href="{{ url_for('static', filename='css/compact-layout.css') }}" rel="stylesheet">
     <!-- Layout Toggle -->
     <link href="{{ url_for('static', filename='css/layout-toggle.css') }}" rel="stylesheet">
+    <!-- Mobile Responsive -->
+    <link href="{{ url_for('static', filename='css/mobile-responsive.css') }}" rel="stylesheet">
     
     <style>
         /* Paleta de Cores Automotiva */
@@ -221,10 +223,6 @@ simele <!DOCTYPE html>
             color: white;
         }
 
-        .table tbody tr {
-            /* Removido hover desnecessário */
-        }
-
         /* Status Badges Automotivos */
         .badge-status {
             padding: 10px 20px;
@@ -314,17 +312,74 @@ simele <!DOCTYPE html>
             animation: slideInRight 0.3s ease-out;
         }
 
-        /* Responsividade */
+        /* Responsividade Mobile */
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
-                z-index: 1000;
+                z-index: 1050;
+                left: 0;
+                top: 0;
+                width: 280px !important;
+                max-width: 80%;
+                height: 100vh;
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
+                overflow-y: auto;
             }
 
             .sidebar.show {
                 transform: translateX(0);
+                box-shadow: 2px 0 15px rgba(0,0,0,0.3);
+            }
+
+            .main-content {
+                width: 100% !important;
+                margin-left: 0 !important;
+            }
+
+            /* Botão de menu hambúrguer */
+            .navbar-toggler-mobile {
+                display: block !important;
+                background: var(--accent-orange);
+                border: none;
+                padding: 10px 15px;
+                border-radius: 8px;
+                color: white;
+                font-size: 1.2rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .navbar-toggler-mobile:hover {
+                background: var(--accent-red);
+                transform: scale(1.05);
+            }
+
+            /* Overlay escuro quando menu está aberto */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1040;
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+
+        /* Desktop - esconder botão de menu */
+        @media (min-width: 769px) {
+            .navbar-toggler-mobile {
+                display: none !important;
+            }
+
+            .sidebar-overlay {
+                display: none !important;
             }
         }
         
@@ -385,6 +440,48 @@ simele <!DOCTYPE html>
                 margin: 5px !important;
                 padding: 8px !important;
             }
+
+            /* Ajustes adicionais para mobile */
+            .top-navbar {
+                position: sticky;
+                top: 0;
+                z-index: 1030;
+            }
+
+            .navbar-brand {
+                font-size: 1rem !important;
+                margin-left: 10px;
+            }
+
+            .navbar-nav {
+                font-size: 0.9rem;
+            }
+
+            /* Cards mais responsivos */
+            .card {
+                margin-bottom: 15px;
+            }
+
+            /* Tabelas responsivas */
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Botões em mobile */
+            .btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+
+            /* Ajuste de padding do conteúdo principal */
+            .main-content {
+                padding: 0 !important;
+            }
+
+            .main-content .container-fluid {
+                padding: 10px !important;
+            }
         }
         
         /* Estilo Padronizado para Modais */
@@ -418,10 +515,13 @@ simele <!DOCTYPE html>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <!-- Overlay para fechar menu em mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar">
+            <div class="col-md-3 col-lg-2 sidebar" id="sidebar">
                 <div class="brand-section">
                     <!-- Logo da Loja -->
                     <div class="mb-3">
@@ -532,6 +632,11 @@ simele <!DOCTYPE html>
                 <!-- Top Navbar -->
                 <nav class="navbar navbar-expand-lg navbar-light top-navbar mb-4">
                     <div class="container-fluid">
+                        <!-- Botão de menu para mobile -->
+                        <button class="navbar-toggler-mobile" type="button" id="sidebarToggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        
                         <span class="navbar-brand">
                             {% block page_title %}Sistema de Auto Peças{% endblock %}
                         </span>
@@ -608,6 +713,45 @@ simele <!DOCTYPE html>
             $('.nav-link').each(function() {
                 if ($(this).attr('href') === currentPath) {
                     $(this).addClass('active');
+                }
+            });
+        });
+
+        // Mobile Menu Toggle
+        $(document).ready(function() {
+            const sidebar = $('#sidebar');
+            const sidebarOverlay = $('#sidebarOverlay');
+            const sidebarToggle = $('#sidebarToggle');
+
+            // Abrir menu
+            sidebarToggle.on('click', function() {
+                sidebar.addClass('show');
+                sidebarOverlay.addClass('show');
+                $('body').css('overflow', 'hidden'); // Prevenir scroll do body
+            });
+
+            // Fechar menu ao clicar no overlay
+            sidebarOverlay.on('click', function() {
+                sidebar.removeClass('show');
+                sidebarOverlay.removeClass('show');
+                $('body').css('overflow', ''); // Restaurar scroll
+            });
+
+            // Fechar menu ao clicar em um link (mobile)
+            sidebar.find('.nav-link').on('click', function() {
+                if (window.innerWidth <= 768) {
+                    sidebar.removeClass('show');
+                    sidebarOverlay.removeClass('show');
+                    $('body').css('overflow', '');
+                }
+            });
+
+            // Fechar menu ao redimensionar para desktop
+            $(window).on('resize', function() {
+                if (window.innerWidth > 768) {
+                    sidebar.removeClass('show');
+                    sidebarOverlay.removeClass('show');
+                    $('body').css('overflow', '');
                 }
             });
         });
