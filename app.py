@@ -1,4 +1,4 @@
-# SISTEMA DE AUTOPEÇAS - FAMÍLIA
+# SISTEMA DE AUTO PEÇAS
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, make_response
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from datetime import datetime, date
