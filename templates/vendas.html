@@ -1,0 +1,1793 @@
+{% extends "base.html" %}
+
+{% block title %}Vendas e Caixa - Sistema de Autopeças{% endblock %}
+{% block page_title %}Sistema de Vendas e Caixa{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/vendas-layout.css') }}">
+<style>
+    /* Checkbox personalizado para impressão */
+    .form-check-custom .form-check-input {
+        border-radius: 4px;
+        border: 2px solid #1a237e;
+        width: 18px;
+        height: 18px;
+    }
+    
+    .form-check-custom .form-check-input:checked {
+        background-color: #1a237e;
+        border-color: #1a237e;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    }
+    
+    .form-check-custom .form-check-label {
+        color: #37474f;
+        font-weight: 500;
+        cursor: pointer;
+        padding-left: 8px;
+    }
+    
+    .form-check-custom .form-check-label:hover {
+        color: #1a237e;
+    }
+    
+    /* Estilos para botões de ação das vendas */
+    .btn-action {
+        margin: 0 2px;
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-visualizar {
+        background-color: #17a2b8;
+        color: white;
+    }
+    
+    .btn-visualizar:hover {
+        background-color: #138496;
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .btn-imprimir {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .btn-imprimir:hover {
+        background-color: #218838;
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .btn-duplicar {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .btn-duplicar:hover {
+        background-color: #e0a800;
+        color: #212529;
+        transform: translateY(-1px);
+    }
+    
+    .btn-deletar {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .btn-deletar:hover {
+        background-color: #c82333;
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .acoes-venda {
+        white-space: nowrap;
+    }
+    
+    /* Modal de confirmação customizado */
+    .modal-confirmar-delecao .modal-content {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .modal-confirmar-delecao .modal-header {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .modal-confirmar-delecao .btn-danger {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        border: none;
+        padding: 10px 20px;
+        font-weight: 600;
+    }
+    
+    .modal-confirmar-delecao .btn-danger:hover {
+        background: linear-gradient(135deg, #c82333, #bd2130);
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="vendas-container">
+    <!-- ÁREA PRINCIPAL DE VENDAS -->
+    <div class="venda-principal">
+        <div class="card-header-vendas">
+            <h5>
+                <i class="fas fa-cash-register"></i>
+                Nova Venda
+            </h5>
+        </div>
+        
+        <form method="POST" action="{{ url_for('registrar_venda') }}" id="formVenda">
+            <!-- SEÇÃO: INFORMAÇÕES GERAIS -->
+            <div class="secao-vendas">
+                <div class="secao-titulo">
+                    <i class="fas fa-user"></i>
+                    Informações da Venda
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="cliente_id" class="form-label">Cliente</label>
+                        <select class="form-control" id="cliente_id" name="cliente_id">
+                            <option value="">Cliente Avulso</option>
+                            {% for cliente in clientes %}
+                            <option value="{{ cliente.id }}">{{ cliente.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="forma_pagamento" class="form-label">Forma de Pagamento *</label>
+                        <select class="form-control" id="forma_pagamento" name="forma_pagamento" required>
+                            <option value="dinheiro">💰 Dinheiro</option>
+                            <option value="pix">📱 PIX</option>
+                            <option value="cartao_debito">💳 Cartão de Débito</option>
+                            <option value="cartao_credito">💳 Cartão de Crédito</option>
+                            <option value="prazo">📅 A Prazo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SEÇÃO: BUSCA DE PRODUTOS -->
+            <div class="secao-vendas">
+                <div class="secao-titulo">
+                    <i class="fas fa-search"></i>
+                    Buscar Produtos
+                </div>
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label for="busca_produto" class="form-label">Buscar Produto</label>
+                        <div class="busca-container">
+                            <div class="busca-input-group">
+                                <input type="text" class="form-control" id="busca_produto" 
+                                       placeholder="Nome / Código Fornecedor / Código de Barras / ID" 
+                                       autocomplete="off">
+                            </div>
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="button" class="btn btn-vendas btn-busca-avancada" onclick="buscarProdutoDetalhado()">
+                                    <i class="fas fa-list"></i> Busca Avançada
+                                </button>
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Digite para buscar em tempo real ou use Enter para busca rápida. 
+                            <strong>F3:</strong> focar na busca | <strong>ESC:</strong> limpar
+                        </small>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="quantidade_produto" class="form-label">Quantidade</label>
+                        <input type="number" class="form-control" id="quantidade_produto" value="1" min="1">
+                    </div>
+                </div>
+                
+                <!-- RESULTADOS DA BUSCA -->
+                <div id="resultadoBusca" style="display: none;">
+                    <div class="resultado-header">
+                        <i class="fas fa-search"></i> Resultados da Busca
+                    </div>
+                    <div class="tabela-busca">
+                        <table class="table table-hover mb-0" id="tabelaBuscaProdutos">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nome</th>
+                                    <th>Cód. Fornecedor</th>
+                                    <th>Categoria</th>
+                                    <th>Estoque</th>
+                                    <th>Preço</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SEÇÃO: ITENS DA VENDA -->
+            <div class="secao-vendas">
+                <div class="secao-titulo">
+                    <i class="fas fa-shopping-cart"></i>
+                    Itens da Venda
+                </div>
+                <div class="table-responsive mb-3">
+                    <table class="table tabela-vendas" id="tabelaVenda">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Qtd</th>
+                                <th>Preço Unit.</th>
+                                <th>Subtotal</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itensVenda">
+                            <tr id="linhaVazia">
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="fas fa-cart-plus fa-2x mb-2"></i><br>
+                                    <strong>Adicione produtos à venda</strong><br>
+                                    <small>Use a busca acima ou os produtos rápidos ao lado</small>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- SEÇÃO: FINALIZAÇÃO -->
+            <div class="secao-vendas">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="resumo-venda">
+                            <div class="card-body">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-calculator"></i>
+                                    Resumo da Venda
+                                </h5>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Itens:</span>
+                                    <strong><span id="totalItens">0</span></strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span>Subtotal:</span>
+                                    <strong>R$ <span id="subtotalVenda">0,00</span></strong>
+                                </div>
+                                
+                                <!-- DESCONTO -->
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <label for="desconto_percentual" class="form-label small">Desconto (%)</label>
+                                        <input type="number" class="form-control form-control-sm" 
+                                               id="desconto_percentual" name="desconto_percentual" 
+                                               min="0" max="100" step="0.01" value="0" 
+                                               placeholder="0.00">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">Valor do Desconto</label>
+                                        <div class="form-control-plaintext small text-danger" id="valorDesconto">R$ 0,00</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="total-venda">
+                                    R$ <span id="totalVenda">0,00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="valor_pago" class="form-label">
+                                <i class="fas fa-money-bill-wave"></i>
+                                Valor Pago (R$) *
+                            </label>
+                            <input type="number" class="form-control" id="valor_pago" name="valor_pago" step="0.01" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-coins"></i>
+                                Troco
+                            </label>
+                            <div class="form-control-plaintext fw-bold fs-4" id="troco">R$ 0,00</div>
+                        </div>
+                        
+                        <!-- OPÇÃO DE IMPRESSÃO -->
+                        <div class="mb-3">
+                            <div class="form-check form-check-custom">
+                                <input class="form-check-input" type="checkbox" id="imprimir_recibo" name="imprimir_recibo" checked>
+                                <label class="form-check-label" for="imprimir_recibo">
+                                    <i class="fas fa-print me-1"></i>
+                                    Imprimir recibo após finalizar venda
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- BOTÕES DE AÇÃO -->
+                        <div class="d-flex justify-content-end gap-3 mt-4">
+                            <button type="button" class="btn btn-vendas btn-limpar" onclick="limparVenda()">
+                                <i class="fas fa-trash"></i> Limpar
+                            </button>
+                            <button type="submit" class="btn btn-vendas btn-finalizar" id="btnFinalizar" disabled>
+                                <i class="fas fa-shopping-cart"></i> Finalizar Venda
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- SIDEBAR: PRODUTOS RÁPIDOS -->
+    <div class="sidebar-produtos">
+        <div class="card-header-vendas">
+            <h6 class="mb-0">
+                <i class="fas fa-bolt"></i> Produtos Rápidos
+            </h6>
+        </div>
+        <div class="produtos-rapidos-grid" id="produtosRapidos">
+            {% for produto in produtos[:12] %}
+            <button type="button" class="produto-rapido" 
+                    data-id="{{ produto.id }}" 
+                    data-nome="{{ produto.nome }}" 
+                    data-preco="{{ produto.preco }}"
+                    data-estoque="{{ produto.estoque }}"
+                    data-codigo-fornecedor="{{ produto.codigo_fornecedor or '' }}"
+                    title="{{ produto.nome }} - R$ {{ '%.2f'|format(produto.preco) }}{% if produto.codigo_fornecedor %} | Cód: {{ produto.codigo_fornecedor }}{% endif %}">
+                <div class="produto-nome">
+                    <strong>{{ produto.nome[:15] }}{% if produto.nome|length > 15 %}...{% endif %}</strong>
+                </div>
+                {% if produto.codigo_fornecedor %}
+                <div class="text-muted small">{{ produto.codigo_fornecedor }}</div>
+                {% endif %}
+                <div class="produto-preco">R$ {{ "%.2f"|format(produto.preco) }}</div>
+                <div class="produto-estoque">Est: {{ produto.estoque }}</div>
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- HISTÓRICO DE VENDAS -->
+<div class="historico-vendas">
+    <div class="historico-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-history"></i> Vendas Realizadas
+            </h5>
+            <div class="filtros-vendas">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-calendar-alt"></i>
+                    </span>
+                    <input type="date" id="dataInicio" class="form-control form-control-sm" 
+                           value="{{ data_hoje }}" onchange="filtrarVendasPorData()">
+                    <span class="input-group-text">até</span>
+                    <input type="date" id="dataFim" class="form-control form-control-sm" 
+                           value="{{ data_hoje }}" onchange="filtrarVendasPorData()">
+                    <button type="button" class="btn btn-outline-light btn-sm" 
+                            onclick="resetarFiltros()" title="Resetar filtros">
+                        <i class="fas fa-refresh"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <div class="estatisticas-vendas">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="stat-value" id="totalVendasCount">{{ vendas_hoje|length if vendas_hoje else 0 }}</span>
+                            <span class="stat-label">Vendas</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span class="stat-value" id="totalVendasValor">R$ {{ "%.2f"|format(total_vendas_hoje or 0)|replace('.', ',') }}</span>
+                            <span class="stat-label">Faturamento</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <i class="fas fa-boxes"></i>
+                            <span class="stat-value" id="totalItensVendidos">{{ total_itens_vendidos or 0 }}</span>
+                            <span class="stat-label">Itens Vendidos</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span class="stat-value" id="ticketMedio">R$ {{ "%.2f"|format(ticket_medio or 0)|replace('.', ',') }}</span>
+                            <span class="stat-label">Ticket Médio</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="filtros-internos">
+            <div class="row">
+                <div class="col-md-3">
+                    <input type="text" id="filtroCliente" class="form-control form-control-sm" 
+                           placeholder="🔍 Filtrar por cliente..." onkeyup="filtrarTabela()">
+                </div>
+                <div class="col-md-2">
+                    <select id="filtroFormaPagamento" class="form-control form-control-sm" onchange="filtrarTabela()">
+                        <option value="">Todas as formas</option>
+                        <option value="dinheiro">💰 Dinheiro</option>
+                        <option value="pix">📱 PIX</option>
+                        <option value="cartao_debito">💳 Cartão Débito</option>
+                        <option value="cartao_credito">💳 Cartão Crédito</option>
+                        <option value="prazo">📅 A Prazo</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="filtroFuncionario" class="form-control form-control-sm" onchange="filtrarTabela()">
+                        <option value="">Todos os funcionários</option>
+                        {% for usuario in usuarios %}
+                        {% if usuario.ativo %}
+                        <option value="{{ usuario.id }}">{{ usuario.nome_completo or usuario.username }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="ordenacao" class="form-control form-control-sm" onchange="ordenarTabela()">
+                        <option value="id_desc">Mais recentes</option>
+                        <option value="id_asc">Mais antigas</option>
+                        <option value="valor_desc">Maior valor</option>
+                        <option value="valor_asc">Menor valor</option>
+                        <option value="cliente_asc">Cliente A-Z</option>
+                        <option value="funcionario_asc">Funcionário A-Z</option>
+                    </select>
+                </div>
+                <div class="col-md-3 text-end">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="exportarVendas('excel')" title="Exportar Excel">
+                            <i class="fas fa-file-excel"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="exportarVendas('pdf')" title="Exportar PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="imprimirRelatorio()" title="Imprimir">
+                            <i class="fas fa-print"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover vendas-table" id="tabelaVendas">
+                <thead class="table-dark sticky-top">
+                    <tr>
+                        <th class="sortable" data-column="id">
+                            <div class="th-content">
+                                Nº Venda <i class="fas fa-sort"></i>
+                            </div>
+                        </th>
+                        <th class="sortable" data-column="cliente">
+                            <div class="th-content">
+                                Cliente <i class="fas fa-sort"></i>
+                            </div>
+                        </th>
+                        <th class="sortable" data-column="itens">
+                            <div class="th-content">
+                                Itens <i class="fas fa-sort"></i>
+                            </div>
+                        </th>
+                        <th class="sortable" data-column="total">
+                            <div class="th-content">
+                                Total <i class="fas fa-sort"></i>
+                            </div>
+                        </th>
+                        <th class="sortable" data-column="forma_pagamento">
+                            <div class="th-content">
+                                Pagamento <i class="fas fa-sort"></i>
+                            </div>
+                        </th>
+                        <th class="sortable" data-column="hora">
+                            <div class="th-content">
+                                Data/Hora <i class="fas fa-sort"></i>
+                            </div>
+                        </th>
+                        <th class="sortable" data-column="funcionario">
+                            <div class="th-content">
+                                Funcionário <i class="fas fa-sort"></i>
+                            </div>
+                        </th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="vendasTableBody">
+                    {% if vendas_hoje %}
+                        {% for venda in vendas_hoje %}
+                        <tr class="venda-row" 
+                            data-id="{{ venda.id }}"
+                            data-cliente="{{ (venda.cliente or 'cliente avulso')|lower }}"
+                            data-forma-pagamento="{{ venda.forma_pagamento }}"
+                            data-total="{{ venda.total }}"
+                            data-data="{{ venda.data_venda }}"
+                            data-funcionario="{{ venda.usuario_id or '' }}"
+                            data-funcionario-nome="{{ (venda.funcionario_nome or 'sem funcionario')|lower }}">
+                            <td>
+                                <div class="venda-numero">
+                                    <strong class="numero-principal">#{{ venda.id }}</strong>
+                                    <small class="data-criacao">{{ venda.data_venda[:10] if venda.data_venda and venda.data_venda|length >= 10 else '' }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="cliente-info">
+                                    <i class="fas fa-user"></i>
+                                    <span class="cliente-nome">{{ venda.cliente or 'Cliente Avulso' }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-itens">
+                                    <i class="fas fa-box"></i>
+                                    {{ venda.total_itens }} {% if venda.total_itens == 1 %}item{% else %}itens{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="valor-venda">
+                                    <strong class="valor-principal">R$ {{ "%.2f"|format(venda.total)|replace('.', ',') }}</strong>
+                                    {% if venda.desconto and venda.desconto > 0 %}
+                                    <small class="desconto-aplicado">
+                                        <i class="fas fa-percent"></i> Desc.: R$ {{ "%.2f"|format(venda.desconto)|replace('.', ',') }}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="pagamento-badge {% if venda.forma_pagamento == 'dinheiro' %}pagamento-dinheiro{% elif venda.forma_pagamento == 'pix' %}pagamento-pix{% elif 'cartao' in venda.forma_pagamento %}pagamento-cartao{% else %}pagamento-prazo{% endif %}">
+                                    {% if venda.forma_pagamento == 'dinheiro' %}
+                                        <i class="fas fa-money-bill-wave"></i> Dinheiro
+                                    {% elif venda.forma_pagamento == 'pix' %}
+                                        <i class="fab fa-pix"></i> PIX
+                                    {% elif venda.forma_pagamento == 'cartao_debito' %}
+                                        <i class="fas fa-credit-card"></i> C. Débito
+                                    {% elif venda.forma_pagamento == 'cartao_credito' %}
+                                        <i class="fas fa-credit-card"></i> C. Crédito
+                                    {% elif venda.forma_pagamento == 'prazo' %}
+                                        <i class="fas fa-calendar-plus"></i> A Prazo
+                                    {% else %}
+                                        <i class="fas fa-question"></i> {{ venda.forma_pagamento|replace('_', ' ')|title }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="data-hora-venda">
+                                    {% if venda.data_venda %}
+                                        <div class="hora-principal">{{ venda.data_venda[-8:-3] if venda.data_venda|length > 8 else venda.data_venda }}</div>
+                                        <small class="data-completa">{{ venda.data_venda[:10] if venda.data_venda|length >= 10 else '' }}</small>
+                                    {% else %}
+                                        <div class="hora-principal">--:--</div>
+                                        <small class="data-completa">--/--/----</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="funcionario-info">
+                                    <i class="fas fa-user-tie"></i>
+                                    <span class="funcionario-nome">{{ venda.funcionario_nome or 'Sem funcionário' }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="acoes-venda">
+                                    <button class="btn btn-sm btn-action btn-visualizar" 
+                                            onclick="visualizarVenda({{ venda.id }})" 
+                                            title="Visualizar detalhes">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-action btn-imprimir" 
+                                            onclick="imprimirRecibo({{ venda.id }})"
+                                            title="Imprimir recibo">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-action btn-duplicar" 
+                                            onclick="duplicarVenda({{ venda.id }})" 
+                                            title="Duplicar venda">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-action btn-deletar" 
+                                            onclick="confirmarDeletarVenda({{ venda.id }})" 
+                                            title="Deletar venda">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr class="empty-state">
+                            <td colspan="8" class="text-center py-5">
+                                <div class="empty-icon">
+                                    <i class="fas fa-receipt fa-3x"></i>
+                                </div>
+                                <h6 class="mt-3 mb-2">Nenhuma venda encontrada</h6>
+                                <p class="text-muted">As vendas realizadas aparecerão aqui conforme forem sendo realizadas</p>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="resetarFiltros()">
+                                    <i class="fas fa-refresh"></i> Resetar Filtros
+                                </button>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginação -->
+        <div class="paginacao-vendas">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="info-paginacao">
+                    <small class="text-muted">
+                        Mostrando <span id="registrosExibidos">{{ vendas_hoje|length if vendas_hoje else 0 }}</span> 
+                        de <span id="totalRegistros">{{ vendas_hoje|length if vendas_hoje else 0 }}</span> vendas
+                    </small>
+                </div>
+                <div class="controles-paginacao">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Exibir:</span>
+                        <select id="itensPorPagina" class="form-control" onchange="alterarItensPorPagina()">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span class="input-group-text">por página</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PRODUTO ENCONTRADO -->
+<div class="modal fade" id="modalProdutoEncontrado" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #1a237e;">
+                <h5 class="modal-title">
+                    <i class="fas fa-box"></i> Produto Encontrado
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="dadosProdutoEncontrado">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="adicionarProdutoVenda(produtoTemp.id, produtoTemp.nome, produtoTemp.preco, produtoTemp.estoque, parseInt($('#quantidade_produto').val()))">
+                    <i class="fas fa-plus"></i> Adicionar à Venda
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CONFIRMAÇÃO DELETAR VENDA -->
+<div class="modal fade modal-confirmar-delecao" id="modalConfirmarDelecaoVenda" tabindex="-1" aria-labelledby="modalConfirmarDelecaoVendaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #1a237e;">
+                <h5 class="modal-title" id="modalConfirmarDelecaoVendaLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Confirmar Exclusão da Venda
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning"></i>
+                    </div>
+                    <h5>Tem certeza que deseja deletar esta venda?</h5>
+                    <p class="text-muted mb-3">
+                        Esta ação <strong>não pode ser desfeita</strong>. A venda será completamente removida do sistema
+                        e o estoque dos produtos será restaurado automaticamente.
+                    </p>
+                    <div class="alert alert-warning" id="detalhesVendaDeletar">
+                        <strong>Venda #<span id="vendaIdDeletar"></span></strong><br>
+                        <span id="vendaDetalhesDeletar"></span>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>O que será feito:</strong>
+                        <ul class="list-unstyled mt-2 mb-0">
+                            <li>✓ Venda será removida completamente</li>
+                            <li>✓ Estoque dos produtos será restaurado</li>
+                            <li>✓ Movimentações de caixa serão removidas</li>
+                            <li>✓ Contas a receber serão canceladas</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarDelecaoVenda">
+                    <i class="fas fa-trash-alt"></i> Sim, Deletar Venda
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let itensVenda = [];
+let produtoTemp = null;
+let subtotalVendaCalculado = 0;
+let totalComDescontoCalculado = 0;
+
+// Atualizar tabela de venda
+function atualizarTabelaVenda() {
+    const tbody = $('#itensVenda');
+    tbody.empty();
+    
+    if (itensVenda.length === 0) {
+        tbody.append(`
+            <tr id="linhaVazia">
+                <td colspan="5" class="text-center text-muted py-4">
+                    <i class="fas fa-cart-plus fa-2x mb-2"></i><br>
+                    <strong>Adicione produtos à venda</strong><br>
+                    <small>Use a busca acima ou os produtos rápidos ao lado</small>
+                </td>
+            </tr>
+        `);
+        $('#btnFinalizar').prop('disabled', true);
+    } else {
+        itensVenda.forEach((item, index) => {
+            tbody.append(`
+                <tr>
+                    <td><strong>${item.nome}</strong></td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm" 
+                               value="${item.quantidade}" min="1" 
+                               onchange="alterarQuantidade(${index}, this.value)" style="width: 80px;">
+                        <input type="hidden" name="produto_id[]" value="${item.id}">
+                        <input type="hidden" name="quantidade[]" value="${item.quantidade}">
+                        <input type="hidden" name="preco[]" value="${item.preco}">
+                    </td>
+                    <td><strong>R$ ${item.preco.toFixed(2).replace('.', ',')}</strong></td>
+                    <td><strong class="text-success">R$ ${item.subtotal.toFixed(2).replace('.', ',')}</strong></td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                onclick="removerItem(${index})" title="Remover item">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `);
+        });
+        $('#btnFinalizar').prop('disabled', false);
+    }
+    
+    atualizarTotais();
+}
+
+// Alterar quantidade
+function alterarQuantidade(index, novaQuantidade) {
+    novaQuantidade = parseInt(novaQuantidade);
+    if (novaQuantidade < 1) novaQuantidade = 1;
+    
+    itensVenda[index].quantidade = novaQuantidade;
+    itensVenda[index].subtotal = itensVenda[index].preco * novaQuantidade;
+    
+    const linha = $(`#itensVenda tr:eq(${index})`);
+    linha.find('input[name="quantidade[]"]').val(novaQuantidade);
+    
+    atualizarTabelaVenda();
+}
+
+// Remover item
+function removerItem(index) {
+    itensVenda.splice(index, 1);
+    atualizarTabelaVenda();
+}
+
+// Atualizar totais
+function atualizarTotais() {
+    const totalItens = itensVenda.reduce((sum, item) => sum + item.quantidade, 0);
+    const subtotal = itensVenda.reduce((sum, item) => sum + item.subtotal, 0);
+    
+    const descontoPercentual = parseFloat($('#desconto_percentual').val()) || 0;
+    const valorDesconto = (subtotal * descontoPercentual) / 100;
+    const totalComDesconto = subtotal - valorDesconto;
+    
+    subtotalVendaCalculado = subtotal;
+    totalComDescontoCalculado = totalComDesconto;
+
+    $('#totalItens').text(totalItens);
+    $('#subtotalVenda').text(subtotal.toFixed(2).replace('.', ','));
+    $('#valorDesconto').text(`R$ ${valorDesconto.toFixed(2).replace('.', ',')}`);
+    $('#totalVenda').text(totalComDesconto.toFixed(2).replace('.', ','));
+    
+    calcularTroco();
+}
+
+// Calcular troco
+function calcularTroco() {
+    const totalComDesconto = totalComDescontoCalculado;
+    const valorPago = parseFloat($('#valor_pago').val()) || 0;
+    const troco = valorPago - totalComDesconto;
+    
+    $('#troco').text(`R$ ${Math.max(0, troco).toFixed(2).replace('.', ',')}`);
+    
+    if (troco < 0) {
+        $('#troco').addClass('text-danger').removeClass('text-success');
+    } else {
+        $('#troco').addClass('text-success').removeClass('text-danger');
+    }
+}
+
+// Limpar venda
+function limparVenda() {
+    if (itensVenda.length > 0 && !confirm('Tem certeza que deseja limpar a venda atual?')) {
+        return;
+    }
+    
+    itensVenda = [];
+    atualizarTabelaVenda();
+    $('#cliente_id').val('');
+    $('#forma_pagamento').val('dinheiro');
+    $('#valor_pago').val('');
+    $('#desconto_percentual').val('0');
+    $('#busca_produto').val('');
+    $('#quantidade_produto').val(1);
+}
+
+// Adicionar produto rápido
+$('.produto-rapido').click(function() {
+    const id = $(this).data('id');
+    const nome = $(this).data('nome');
+    const preco = parseFloat($(this).data('preco'));
+    const estoque = parseInt($(this).data('estoque'));
+    
+    if (estoque <= 0) {
+        alert('Produto sem estoque!');
+        return;
+    }
+    
+    const itemExistente = itensVenda.find(item => item.id === id);
+    
+    if (itemExistente) {
+        const novaQuantidade = itemExistente.quantidade + 1;
+        if (novaQuantidade > estoque) {
+            alert(`Estoque insuficiente! Disponível: ${estoque}, já adicionado: ${itemExistente.quantidade}`);
+            return;
+        }
+        itemExistente.quantidade = novaQuantidade;
+        itemExistente.subtotal = itemExistente.quantidade * itemExistente.preco;
+    } else {
+        itensVenda.push({
+            id: id,
+            nome: nome,
+            preco: preco,
+            quantidade: 1,
+            subtotal: preco
+        });
+    }
+    
+    atualizarTabelaVenda();
+});
+
+// Busca em tempo real
+function buscarProdutoTempoReal(termo) {
+    console.log('Busca em tempo real para:', termo);
+    
+    if (window.buscaTimeout) {
+        clearTimeout(window.buscaTimeout);
+    }
+    
+    window.buscaTimeout = setTimeout(() => {
+        $('#busca_produto').addClass('searching');
+        
+        fetch(`/api/produtos/buscar?q=${encodeURIComponent(termo)}`)
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(produtos => {
+                console.log('Produtos encontrados:', produtos.length);
+                $('#busca_produto').removeClass('searching');
+                
+                if (produtos && produtos.length > 0) {
+                    mostrarResultadosBusca(produtos.slice(0, 10));
+                } else {
+                    console.log('Nenhum produto encontrado, ocultando resultados');
+                    $('#resultadoBusca').hide();
+                }
+            })
+            .catch(error => {
+                console.error('Erro na busca em tempo real:', error);
+                $('#busca_produto').removeClass('searching');
+                $('#resultadoBusca').hide();
+                
+                if (!error.message.includes('fetch')) {
+                    console.warn('Erro na busca em tempo real, mas continuando silenciosamente');
+                }
+            });
+    }, 300);
+}
+
+// Busca detalhada
+function buscarProdutoDetalhado() {
+    const termo = $('#busca_produto').val().trim();
+    console.log('Busca detalhada para:', termo);
+    
+    if (!termo) {
+        alert('Digite um termo para buscar');
+        $('#busca_produto').focus();
+        return;
+    }
+    
+    const btnBusca = $('button[onclick="buscarProdutoDetalhado()"]');
+    const textOriginal = btnBusca.html();
+    btnBusca.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Buscando...');
+    
+    fetch(`/api/produtos/buscar?q=${encodeURIComponent(termo)}`)
+        .then(response => {
+            console.log('Response status busca detalhada:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(produtos => {
+            console.log('Produtos encontrados na busca detalhada:', produtos.length);
+            if (produtos && produtos.length > 0) {
+                mostrarResultadosBusca(produtos);
+                if (produtos.length === 1) {
+                    setTimeout(() => {
+                        const primeiroBtn = $('#tabelaBuscaProdutos tbody button').first();
+                        if (primeiroBtn.length) {
+                            primeiroBtn.focus();
+                        }
+                    }, 100);
+                }
+            } else {
+                alert('Nenhum produto encontrado');
+                $('#resultadoBusca').hide();
+                $('#busca_produto').focus().select();
+            }
+        })
+        .catch(error => {
+            console.error('Erro na busca detalhada:', error);
+            alert('Erro ao buscar produtos: ' + error.message);
+        })
+        .finally(() => {
+            btnBusca.prop('disabled', false).html(textOriginal);
+        });
+}
+
+// Mostrar resultados da busca
+function mostrarResultadosBusca(produtos) {
+    console.log('Mostrando resultados da busca:', produtos.length, 'produtos');
+    
+    const tbody = $('#tabelaBuscaProdutos tbody');
+    console.log('Tabela tbody encontrada:', tbody.length > 0);
+    
+    if (tbody.length === 0) {
+        console.error('Tabela tbody não encontrada!');
+        alert('Erro: Tabela de resultados não encontrada na página');
+        return;
+    }
+    
+    try {
+        tbody.empty();
+        
+        if (!produtos || produtos.length === 0) {
+            tbody.append(`
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-3">
+                        <i class="fas fa-search"></i> Nenhum produto encontrado
+                    </td>
+                </tr>
+            `);
+            $('#resultadoBusca').show();
+            return;
+        }
+        
+        produtos.forEach((produto, index) => {
+            console.log(`Adicionando produto ${index + 1}:`, produto.nome);
+            
+            if (!produto.id || !produto.nome || produto.preco === undefined) {
+                console.warn('Produto com dados incompletos:', produto);
+                return;
+            }
+            
+            const estoqueBadge = produto.estoque <= 0 ? 'danger' : 
+                               produto.estoque <= (produto.estoque_minimo || 5) ? 'warning' : 'success';
+            
+            const nomeEscapado = (produto.nome || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+            
+            const row = $(`
+                <tr class="produto-resultado">
+                    <td>${produto.id}</td>
+                    <td>
+                        <strong>${produto.nome}</strong>
+                        ${produto.codigo_barras ? `<br><small class="text-muted"><i class="fas fa-barcode"></i> ${produto.codigo_barras}</small>` : ''}
+                    </td>
+                    <td>
+                        ${produto.codigo_fornecedor ? `<span class="badge bg-info">${produto.codigo_fornecedor}</span>` : '<small class="text-muted">-</small>'}
+                    </td>
+                    <td>
+                        ${produto.categoria ? `<span class="badge bg-secondary">${produto.categoria}</span>` : '<small class="text-muted">-</small>'}
+                    </td>
+                    <td>
+                        <span class="badge bg-${estoqueBadge}">${produto.estoque || 0}</span>
+                    </td>
+                    <td><strong>R$ ${(produto.preco || 0).toFixed(2).replace('.', ',')}</strong></td>
+                    <td>
+                        <button class="btn btn-sm btn-success" 
+                                onclick="adicionarProdutoVenda(${produto.id}, '${nomeEscapado}', ${produto.preco || 0}, ${produto.estoque || 0})" 
+                                ${(produto.estoque || 0) <= 0 ? 'disabled title="Sem estoque"' : 'title="Adicionar à venda"'}>
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </td>
+                </tr>
+            `);
+            tbody.append(row);
+        });
+        
+        console.log('Exibindo div de resultados');
+        $('#resultadoBusca').show();
+        
+        $('#resultadoBusca')[0].scrollTop = 0;
+        
+    } catch (error) {
+        console.error('Erro ao mostrar resultados:', error);
+        alert('Erro ao exibir resultados da busca: ' + error.message);
+    }
+}
+
+// Adicionar produto da busca à venda
+function adicionarProdutoVenda(id, nome, preco, estoque, quantidadeForçada = null) {
+    try {
+        console.log('Adicionando produto à venda:', {id, nome, preco, estoque});
+        
+        const quantidade = quantidadeForçada || parseInt($('#quantidade_produto').val()) || 1;
+        
+        if (!id || !nome || preco === undefined) {
+            alert('Dados do produto inválidos');
+            return;
+        }
+        
+        if (quantidade <= 0) {
+            alert('Quantidade deve ser maior que zero');
+            return;
+        }
+        
+        if (estoque < quantidade) {
+            alert(`Estoque insuficiente! Disponível: ${estoque}`);
+            return;
+        }
+        
+        const itemExistente = itensVenda.find(item => item.id === id);
+        
+        if (itemExistente) {
+            const novaQuantidade = itemExistente.quantidade + quantidade;
+            if (novaQuantidade > estoque) {
+                alert(`Estoque insuficiente! Disponível: ${estoque}, já adicionado: ${itemExistente.quantidade}`);
+                return;
+            }
+            itemExistente.quantidade = novaQuantidade;
+            itemExistente.subtotal = itemExistente.quantidade * itemExistente.preco;
+        } else {
+            itensVenda.push({
+                id: id,
+                nome: nome,
+                preco: preco,
+                quantidade: quantidade,
+                subtotal: preco * quantidade
+            });
+        }
+        
+        atualizarTabelaVenda();
+        $('#busca_produto').val('').focus();
+        $('#quantidade_produto').val(1);
+        $('#resultadoBusca').hide();
+        
+        const modalElement = document.getElementById('modalProdutoEncontrado');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+             modalInstance.hide();
+        }
+        
+        console.log('Produto adicionado com sucesso');
+        
+    } catch (error) {
+        console.error('Erro ao adicionar produto:', error);
+        alert('Erro ao adicionar produto: ' + error.message);
+    }
+}
+
+// Event listeners
+$(document).ready(function() {
+    console.log('Página de vendas carregada');
+    
+    setTimeout(function() {
+        console.log('Configurando event listeners...');
+        
+        if ($('#busca_produto').length === 0) {
+            console.error('Campo de busca não encontrado!');
+            return;
+        }
+        
+        console.log('Campo de busca encontrado, configurando eventos...');
+        
+        $('#busca_produto').off('keypress').on('keypress', function(e) {
+            console.log('Tecla pressionada no campo busca:', e.which);
+            if (e.which === 13) {
+                e.preventDefault();
+                console.log('Enter pressionado, iniciando busca detalhada...');
+                buscarProdutoDetalhado();
+            }
+        });
+        
+        $('#busca_produto').off('input').on('input', function() {
+            const termo = $(this).val().trim();
+            console.log('Input mudou para:', termo);
+            
+            if (termo.length >= 2) {
+                $(this).addClass('searching');
+                console.log('Iniciando busca em tempo real...');
+                buscarProdutoTempoReal(termo);
+            } else {
+                $(this).removeClass('searching');
+                console.log('Termo muito curto, ocultando resultados...');
+                $('#resultadoBusca').hide();
+            }
+        });
+        
+        $('#busca_produto').after('<span class="input-group-text" id="limparBusca" style="cursor: pointer; display: none;"><i class="fas fa-times"></i></span>');
+        
+        $('#busca_produto').on('input', function() {
+            if ($(this).val().trim()) {
+                $('#limparBusca').show();
+            } else {
+                $('#limparBusca').hide();
+            }
+        });
+        
+        $(document).on('click', '#limparBusca', function() {
+            $('#busca_produto').val('').focus().removeClass('searching');
+            $('#resultadoBusca').hide();
+            $(this).hide();
+        });
+        
+        $(document).on('keydown', function(e) {
+            if (e.which === 114) { // F3
+                e.preventDefault();
+                $('#busca_produto').focus().select();
+            }
+            if (e.which === 27) { // ESC
+                $('#busca_produto').val('').removeClass('searching');
+                $('#resultadoBusca').hide();
+                $('#limparBusca').hide();
+            }
+        });
+        
+        console.log('Event listeners configurados com sucesso');
+    }, 100);
+    
+    $('#valor_pago').off('input').on('input', calcularTroco);
+    
+    $('#desconto_percentual').off('input').on('input', function() {
+        const valor = parseFloat($(this).val()) || 0;
+        if (valor > 100) {
+            $(this).val(100);
+        }
+        atualizarTotais();
+    });
+    
+    $('#forma_pagamento').off('change').change(function() {
+        const formaPagamento = $(this).val();
+        if (formaPagamento !== 'dinheiro') {
+            const totalComDesconto = totalComDescontoCalculado;
+            $('#valor_pago').val(totalComDesconto.toFixed(2));
+            calcularTroco();
+        }
+    });
+    
+    $('#formVenda').off('submit').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (itensVenda.length === 0) {
+            alert('Nenhum produto foi adicionado à venda!');
+            return false;
+        }
+        
+        const formaPagamento = $('#forma_pagamento').val();
+        const valorPago = parseFloat($('#valor_pago').val()) || 0;
+        const totalComDesconto = totalComDescontoCalculado;
+        
+        if (formaPagamento === 'dinheiro' && valorPago < totalComDesconto) {
+            alert('Valor pago é inferior ao total da venda!');
+            return false;
+        }
+        
+        const itensFormatados = itensVenda.map(item => ({
+            produto_id: item.id,
+            quantidade: item.quantidade,
+            preco_unitario: item.preco,
+            subtotal: item.subtotal
+        }));
+        
+        const itensInput = $('<input>').attr({
+            type: 'hidden',
+            name: 'itens',
+            value: JSON.stringify(itensFormatados)
+        });
+        
+        const descontoPercentual = parseFloat($('#desconto_percentual').val()) || 0;
+        const subtotalVenda = subtotalVendaCalculado;
+        const valorDescontoAbsoluto = (subtotalVenda * descontoPercentual) / 100;
+        
+        const descontoInput = $('<input>').attr({
+            type: 'hidden',
+            name: 'desconto',
+            value: valorDescontoAbsoluto.toFixed(2)
+        });
+        
+        $(this).append(itensInput);
+        $(this).append(descontoInput);
+        
+        console.log('Enviando formulário de venda...');
+        this.submit();
+    });
+    
+    setTimeout(function() {
+        $('#busca_produto').focus();
+        console.log('Foco aplicado ao campo de busca');
+    }, 600);
+});
+
+// Função para visualizar venda
+function visualizarVenda(vendaId) {
+    console.log('Visualizando venda:', vendaId);
+    window.location.href = `/vendas/${vendaId}`;
+}
+
+// Função para imprimir recibo de venda - Nova implementação
+function imprimirRecibo(vendaId) {
+    console.log('Imprimindo recibo da venda:', vendaId);
+    
+    // Abre uma nova janela com o recibo para impressão
+    const janelaRecibo = window.open(`/vendas/${vendaId}/recibo`, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
+    
+    if (!janelaRecibo) {
+        alert('Por favor, permita pop-ups para imprimir o recibo.');
+        return;
+    }
+    
+    // Opcional: Auto-imprimir quando a página carregar
+    janelaRecibo.onload = function() {
+        setTimeout(() => {
+            janelaRecibo.print();
+        }, 1000);
+    };
+}
+
+// Função para duplicar venda
+function duplicarVenda(vendaId) {
+    if (confirm('Deseja duplicar esta venda? Os produtos serão adicionados ao carrinho atual.')) {
+        fetch(`/api/vendas/${vendaId}/detalhes`)
+            .then(response => response.json())
+            .then(venda => {
+                venda.itens.forEach(item => {
+                    adicionarProdutoVenda(item.produto_id, item.produto_nome, item.preco_unitario, item.estoque_atual, item.quantidade);
+                });
+                alert('Venda duplicada com sucesso!');
+            })
+            .catch(error => {
+                console.error('Erro ao duplicar venda:', error);
+                alert('Erro ao duplicar venda');
+            });
+    }
+}
+
+// Função para confirmar deleção de venda
+function confirmarDeletarVenda(vendaId) {
+    console.log('Solicitando confirmação para deletar venda:', vendaId);
+    
+    // Buscar detalhes da venda para mostrar no modal
+    fetch(`/api/vendas/${vendaId}/detalhes`)
+        .then(response => response.json())
+        .then(venda => {
+            if (venda.error) {
+                alert('Erro ao carregar detalhes da venda: ' + venda.error);
+                return;
+            }
+            
+            // Preencher dados no modal
+            document.getElementById('vendaIdDeletar').textContent = venda.id;
+            
+            const detalhes = [
+                `Total: R$ ${venda.total.toFixed(2).replace('.', ',')}`,
+                `${venda.itens.length} ${venda.itens.length === 1 ? 'item' : 'itens'}`,
+                `Cliente: ${venda.cliente || 'Avulso'}`
+            ].join(' | ');
+            
+            document.getElementById('vendaDetalhesDeletar').innerHTML = detalhes;
+            
+            // Configurar o botão de confirmação
+            const btnConfirmar = document.getElementById('btnConfirmarDelecaoVenda');
+            btnConfirmar.onclick = () => deletarVenda(vendaId);
+            
+            // Mostrar o modal
+            const modal = new bootstrap.Modal(document.getElementById('modalConfirmarDelecaoVenda'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Erro ao carregar detalhes da venda:', error);
+            alert('Erro ao carregar detalhes da venda. Tente novamente.');
+        });
+}
+
+// Função para deletar venda
+function deletarVenda(vendaId) {
+    console.log('Deletando venda:', vendaId);
+    
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarDelecaoVenda'));
+    const btnConfirmar = document.getElementById('btnConfirmarDelecaoVenda');
+    
+    // Mostrar loading no botão
+    const textoOriginal = btnConfirmar.innerHTML;
+    btnConfirmar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deletando...';
+    btnConfirmar.disabled = true;
+    
+    fetch(`/vendas/${vendaId}/deletar`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            modal.hide();
+            
+            // Mostrar mensagem de sucesso
+            alert(data.message || 'Venda deletada com sucesso!');
+            
+            // Remover a linha da tabela ou recarregar a lista
+            const linhaVenda = document.querySelector(`tr[data-id="${vendaId}"]`);
+            if (linhaVenda) {
+                linhaVenda.remove();
+                
+                // Atualizar contadores
+                const registrosExibidos = document.getElementById('registrosExibidos');
+                const totalRegistros = document.getElementById('totalRegistros');
+                if (registrosExibidos && totalRegistros) {
+                    const novoTotal = parseInt(registrosExibidos.textContent) - 1;
+                    registrosExibidos.textContent = novoTotal;
+                    totalRegistros.textContent = novoTotal;
+                }
+                
+                // Se não há mais vendas, mostrar mensagem vazia
+                const tbody = document.getElementById('vendasTableBody');
+                if (tbody && tbody.children.length === 0) {
+                    tbody.innerHTML = `
+                        <tr class="empty-state">
+                            <td colspan="8" class="text-center py-5">
+                                <div class="empty-icon">
+                                    <i class="fas fa-receipt fa-3x"></i>
+                                </div>
+                                <h6 class="mt-3 mb-2">Nenhuma venda encontrada</h6>
+                                <p class="text-muted">As vendas realizadas aparecerão aqui conforme forem sendo realizadas</p>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="resetarFiltros()">
+                                    <i class="fas fa-refresh"></i> Resetar Filtros
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } else {
+                // Se não encontrou a linha, recarregar a página
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+            
+        } else {
+            alert('Erro ao deletar venda: ' + (data.error || 'Erro desconhecido'));
+            btnConfirmar.innerHTML = textoOriginal;
+            btnConfirmar.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao deletar venda:', error);
+        alert('Erro ao deletar venda. Tente novamente.');
+        btnConfirmar.innerHTML = textoOriginal;
+        btnConfirmar.disabled = false;
+    });
+}
+
+// FILTROS E ORDENAÇÃO DE VENDAS
+let vendasOriginais = [];
+let currentSortColumn = 'id';
+let currentSortDirection = 'desc';
+
+// Inicializar dados de vendas
+function inicializarDadosVendas() {
+    const linhas = document.querySelectorAll('#vendasTableBody tr.venda-row');
+    vendasOriginais = Array.from(linhas).map(linha => ({
+        elemento: linha,
+        id: parseInt(linha.dataset.id),
+        cliente: linha.dataset.cliente,
+        formaPagamento: linha.dataset.formaPagamento,
+        total: parseFloat(linha.dataset.total),
+        data: linha.dataset.data,
+        html: linha.outerHTML
+    }));
+}
+
+// Filtrar vendas por data
+function filtrarVendasPorData() {
+    const dataInicio = document.getElementById('dataInicio').value;
+    const dataFim = document.getElementById('dataFim').value;
+    
+    if (!dataInicio || !dataFim) return;
+    
+    // Mostrar loading
+    const tbody = document.getElementById('vendasTableBody');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="8" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <p class="mt-2 mb-0">Carregando vendas...</p>
+            </td>
+        </tr>
+    `;
+    
+    // Fazer requisição para buscar vendas do período
+    fetch(`/api/vendas/periodo?inicio=${dataInicio}&fim=${dataFim}`)
+        .then(response => response.json())
+        .then(data => {
+            atualizarTabelaVendas(data.vendas);
+            atualizarEstatisticas(data.estatisticas);
+        })
+        .catch(error => {
+            console.error('Erro ao filtrar vendas:', error);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>
+                        <strong>Erro ao carregar vendas</strong><br>
+                        <small>Tente novamente em alguns instantes</small>
+                    </td>
+                </tr>
+            `;
+        });
+}
+
+// Atualizar tabela de vendas
+function atualizarTabelaVendas(vendas) {
+    const tbody = document.getElementById('vendasTableBody');
+    
+    if (!vendas || vendas.length === 0) {
+        tbody.innerHTML = `
+            <tr class="empty-state">
+                <td colspan="8" class="text-center py-5">
+                    <div class="empty-icon">
+                        <i class="fas fa-receipt fa-3x"></i>
+                    </div>
+                    <h6 class="mt-3 mb-2">Nenhuma venda encontrada</h6>
+                    <p class="text-muted">Não há vendas no período selecionado</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = vendas.map(venda => `
+        <tr class="venda-row" 
+            data-id="${venda.id}"
+            data-cliente="${(venda.cliente || 'cliente avulso').toLowerCase()}"
+            data-forma-pagamento="${venda.forma_pagamento}"
+            data-total="${venda.total}"
+            data-data="${venda.data_venda}"
+            data-funcionario="${venda.usuario_id || ''}"
+            data-funcionario-nome="${(venda.funcionario_nome || 'sem funcionario').toLowerCase()}">
+            <td>
+                <div class="venda-numero">
+                    <strong class="numero-principal">#${venda.id}</strong>
+                    <small class="data-criacao">${venda.data_venda ? venda.data_venda.substring(0, 10) : ''}</small>
+                </div>
+            </td>
+            <td>
+                <div class="cliente-info">
+                    <i class="fas fa-user"></i>
+                    <span class="cliente-nome">${venda.cliente || 'Cliente Avulso'}</span>
+                </div>
+            </td>
+            <td>
+                <span class="badge badge-itens">
+                    <i class="fas fa-box"></i>
+                    ${venda.total_itens} ${venda.total_itens === 1 ? 'item' : 'itens'}
+                </span>
+            </td>
+            <td>
+                <div class="valor-venda">
+                    <strong class="valor-principal">R$ ${venda.total.toFixed(2).replace('.', ',')}</strong>
+                    ${venda.desconto && venda.desconto > 0 ? `
+                        <small class="desconto-aplicado">
+                            <i class="fas fa-percent"></i> Desc.: R$ ${venda.desconto.toFixed(2).replace('.', ',')}
+                        </small>
+                    ` : ''}
+                </div>
+            </td>
+            <td>
+                <span class="pagamento-badge ${getPagamentoBadgeClass(venda.forma_pagamento)}">
+                    ${getPagamentoIcon(venda.forma_pagamento)} ${formatarFormaPagamento(venda.forma_pagamento)}
+                </span>
+            </td>
+            <td>
+                <div class="data-hora-venda">
+                    <div class="hora-principal">${venda.data_venda ? venda.data_venda.substring(11, 16) : '--:--'}</div>
+                    <small class="data-completa">${venda.data_venda ? venda.data_venda.substring(0, 10) : '--/--/----'}</small>
+                </div>
+            </td>
+            <td>
+                <div class="funcionario-info">
+                    <i class="fas fa-user-tie"></i>
+                    <span class="funcionario-nome">${venda.funcionario_nome || 'Sem funcionário'}</span>
+                </div>
+            </td>
+            <td>
+                <div class="acoes-venda">
+                    <button class="btn btn-sm btn-action btn-visualizar" 
+                            onclick="visualizarVenda(${venda.id})" 
+                            title="Visualizar detalhes">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <a href="/vendas/${venda.id}" 
+                       target="_blank" 
+                       class="btn btn-sm btn-action btn-imprimir" 
+                       title="Imprimir recibo">
+                        <i class="fas fa-print"></i>
+                    </a>
+                    <button class="btn btn-sm btn-action btn-duplicar" 
+                            onclick="duplicarVenda(${venda.id})" 
+                            title="Duplicar venda">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="btn btn-sm btn-action btn-deletar" 
+                            onclick="confirmarDeletarVenda(${venda.id})" 
+                            title="Deletar venda">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    
+    // Reinicializar dados de vendas após atualização
+    inicializarDadosVendas();
+}
+
+// Helpers para formatação
+function getPagamentoBadgeClass(formaPagamento) {
+    if (formaPagamento === 'dinheiro') return 'pagamento-dinheiro';
+    if (formaPagamento === 'pix') return 'pagamento-pix';
+    if (formaPagamento.includes('cartao')) return 'pagamento-cartao';
+    return 'pagamento-prazo';
+}
+
+function getPagamentoIcon(formaPagamento) {
+    if (formaPagamento === 'dinheiro') return '<i class="fas fa-money-bill-wave"></i>';
+    if (formaPagamento === 'pix') return '<i class="fab fa-pix"></i>';
+    if (formaPagamento === 'cartao_debito') return '<i class="fas fa-credit-card"></i>';
+    if (formaPagamento === 'cartao_credito') return '<i class="fas fa-credit-card"></i>';
+    if (formaPagamento === 'prazo') return '<i class="fas fa-calendar-plus"></i>';
+    return '<i class="fas fa-question"></i>';
+}
+
+function formatarFormaPagamento(formaPagamento) {
+    const formatacoes = {
+        'dinheiro': 'Dinheiro',
+        'pix': 'PIX',
+        'cartao_debito': 'C. Débito',
+        'cartao_credito': 'C. Crédito',
+        'prazo': 'A Prazo'
+    };
+    return formatacoes[formaPagamento] || formaPagamento.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+// Atualizar estatísticas
+function atualizarEstatisticas(stats) {
+    document.getElementById('totalVendasCount').textContent = stats.total_vendas || 0;
+    document.getElementById('totalVendasValor').textContent = `R$ ${(stats.faturamento || 0).toFixed(2).replace('.', ',')}`;
+    document.getElementById('totalItensVendidos').textContent = stats.total_itens || 0;
+    document.getElementById('ticketMedio').textContent = `R$ ${(stats.ticket_medio || 0).toFixed(2).replace('.', ',')}`;
+}
+
+// Filtrar tabela por texto e outras opções
+function filtrarTabela() {
+    const filtroCliente = document.getElementById('filtroCliente').value.toLowerCase();
+    const filtroFormaPagamento = document.getElementById('filtroFormaPagamento').value;
+    const filtroFuncionario = document.getElementById('filtroFuncionario').value;
+    
+    const linhas = document.querySelectorAll('#vendasTableBody tr.venda-row');
+    let visiveisCount = 0;
+    
+    linhas.forEach(linha => {
+        let visivel = true;
+        
+        // Filtro por cliente
+        if (filtroCliente && !linha.dataset.cliente.includes(filtroCliente)) {
+            visivel = false;
+        }
+        
+        // Filtro por forma de pagamento
+        if (filtroFormaPagamento && linha.dataset.formaPagamento !== filtroFormaPagamento) {
+            visivel = false;
+        }
+        
+        // Filtro por funcionário
+        if (filtroFuncionario && linha.dataset.funcionario !== filtroFuncionario) {
+            visivel = false;
+        }
+        
+        linha.style.display = visivel ? '' : 'none';
+        if (visivel) visiveisCount++;
+    });
+    
+    document.getElementById('registrosExibidos').textContent = visiveisCount;
+    
+    // Mostrar mensagem se nenhum registro for encontrado
+    const tbody = document.getElementById('vendasTableBody');
+    const emptyState = tbody.querySelector('.empty-state');
+    
+    if (visiveisCount === 0 && !emptyState) {
+        tbody.insertAdjacentHTML('beforeend', `
+            <tr class="empty-state-filter">
+                <td colspan="8" class="text-center py-4 text-muted">
+                    <i class="fas fa-search fa-2x mb-2"></i><br>
+                    <strong>Nenhuma venda encontrada</strong><br>
+                    <small>Tente ajustar os filtros aplicados</small>
+                </td>
+            </tr>
+        `);
+    } else if (visiveisCount > 0) {
+        const emptyFilter = tbody.querySelector('.empty-state-filter');
+        if (emptyFilter) emptyFilter.remove();
+    }
+}
+
+// Ordenar tabela
+function ordenarTabela() {
+    const ordenacao = document.getElementById('ordenacao').value;
+    const [coluna, direcao] = ordenacao.split('_');
+    
+    const tbody = document.getElementById('vendasTableBody');
+    const linhas = Array.from(tbody.querySelectorAll('tr.venda-row'));
+    
+    linhas.sort((a, b) => {
+        let valorA, valorB;
+        
+        switch (coluna) {
+            case 'id':
+                valorA = parseInt(a.dataset.id);
+                valorB = parseInt(b.dataset.id);
+                break;
+            case 'cliente':
+                valorA = a.dataset.cliente;
+                valorB = b.dataset.cliente;
+                break;
+            case 'funcionario':
+                valorA = a.dataset.funcionarioNome;
+                valorB = b.dataset.funcionarioNome;
+                break;
+            case 'valor':
+                valorA = parseFloat(a.dataset.total);
+                valorB = parseFloat(b.dataset.total);
+                break;
+            default:
+                return 0;
+        }
+        
+        if (valorA < valorB) return direcao === 'asc' ? -1 : 1;
+        if (valorA > valorB) return direcao === 'asc' ? 1 : -1;
+        return 0;
+    });
+    
+    // Reordenar no DOM
+    linhas.forEach(linha => tbody.appendChild(linha));
+}
+
+// Resetar filtros
+function resetarFiltros() {
+    document.getElementById('dataInicio').value = new Date().toISOString().split('T')[0];
+    document.getElementById('dataFim').value = new Date().toISOString().split('T')[0];
+    document.getElementById('filtroCliente').value = '';
+    document.getElementById('filtroFormaPagamento').value = '';
+    document.getElementById('filtroFuncionario').value = '';
+    document.getElementById('ordenacao').value = 'id_desc';
+    
+    filtrarVendasPorData();
+}
+
+// Exportar vendas
+function exportarVendas(formato) {
+    const dataInicio = document.getElementById('dataInicio').value;
+    const dataFim = document.getElementById('dataFim').value;
+    
+    const url = `/api/vendas/exportar/${formato}?inicio=${dataInicio}&fim=${dataFim}`;
+    window.open(url, '_blank');
+}
+
+// Imprimir relatório
+function imprimirRelatorio() {
+    const dataInicio = document.getElementById('dataInicio').value;
+    const dataFim = document.getElementById('dataFim').value;
+    
+    const url = `/relatorios/vendas?inicio=${dataInicio}&fim=${dataFim}&imprimir=true`;
+    window.open(url, '_blank');
+}
+
+// Alterar itens por página
+function alterarItensPorPagina() {
+    const itensPorPagina = document.getElementById('itensPorPagina').value;
+    // Implementar paginação se necessário
+    console.log('Alterando para', itensPorPagina, 'itens por página');
+}
+
+// Inicializar quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    // Definir data de hoje como padrão
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('dataInicio').value = hoje;
+    document.getElementById('dataFim').value = hoje;
+    
+    // Inicializar dados de vendas
+    inicializarDadosVendas();
+    
+    // Configurar ordenação por clique no cabeçalho
+    document.querySelectorAll('.sortable').forEach(th => {
+        th.addEventListener('click', function() {
+            const coluna = this.dataset.column;
+            const icone = this.querySelector('i');
+            
+            // Resetar outros ícones
+            document.querySelectorAll('.sortable i').forEach(i => {
+                i.className = 'fas fa-sort';
+            });
+            
+            // Definir direção
+            let direcao = 'asc';
+            if (currentSortColumn === coluna && currentSortDirection === 'asc') {
+                direcao = 'desc';
+            }
+            
+            currentSortColumn = coluna;
+            currentSortDirection = direcao;
+            
+            // Atualizar ícone
+            icone.className = `fas fa-sort-${direcao === 'asc' ? 'up' : 'down'}`;
+            
+            // Aplicar ordenação
+            document.getElementById('ordenacao').value = `${coluna}_${direcao}`;
+            ordenarTabela();
+        });
+    });
+});
+</script>
+{% endblock %}

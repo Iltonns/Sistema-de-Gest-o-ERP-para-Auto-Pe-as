@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Produtos Mais Vendidos - Sistema de Autopeças{% endblock %}
+{% block page_title %}Produtos Mais Vendidos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Filtros -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter"></i> Filtros
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Data Início</label>
+                        <input type="date" name="data_inicio" class="form-control" value="{{ data_inicio or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Data Fim</label>
+                        <input type="date" name="data_fim" class="form-control" value="{{ data_fim or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Quantidade de Produtos</label>
+                        <select name="limite" class="form-select">
+                            <option value="10" {% if limite == 10 %}selected{% endif %}>Top 10</option>
+                            <option value="20" {% if limite == 20 %}selected{% endif %}>Top 20</option>
+                            <option value="50" {% if limite == 50 %}selected{% endif %}>Top 50</option>
+                            <option value="100" {% if limite == 100 %}selected{% endif %}>Top 100</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary d-block w-100">
+                            <i class="fas fa-search"></i> Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if relatorio.erro %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                Erro ao gerar relatório: {{ relatorio.erro }}
+            </div>
+        {% else %}
+            <!-- Ranking de Produtos -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trophy"></i> Ranking dos Produtos Mais Vendidos
+                    </h5>
+                    <div class="export-buttons">
+                        <button class="btn btn-sm btn-success" onclick="exportarCSV()">
+                            <i class="fas fa-file-csv"></i> Exportar CSV
+                        </button>
+                        <a href="{{ url_for('exportar_produtos_mais_vendidos_pdf', data_inicio=data_inicio, data_fim=data_fim, limite=limite) }}" 
+                           class="btn btn-sm btn-danger">
+                            <i class="fas fa-file-pdf"></i> Exportar PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if relatorio.produtos %}
+                        <!-- Controles de Paginação Superior -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center gap-2">
+                                    <label for="itensPorPagina" class="form-label mb-0">Mostrar:</label>
+                                    <select id="itensPorPagina" class="form-select form-select-sm" style="width: auto;">
+                                        <option value="10" selected>10</option>
+                                        <option value="20">20</option>
+                                        <option value="50">50</option>
+                                        <option value="all">Todos</option>
+                                    </select>
+                                    <span class="text-muted">produtos</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-end">
+                                    <div class="input-group" style="max-width: 250px;">
+                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <input type="text" id="buscaPrincipal" class="form-control" placeholder="Buscar produtos...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped relatorio-table" id="tabelaProdutos">
+                                <thead>
+                                    <tr>
+                                        <th>Posição</th>
+                                        <th>Código</th>
+                                        <th>Produto</th>
+                                        <th>Qtd. Vendida</th>
+                                        <th>Valor Total</th>
+                                        <th>Preço Médio</th>
+                                        <th>Nº de Vendas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for produto in relatorio.produtos %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge {% if loop.index <= 3 %}bg-warning{% else %}bg-secondary{% endif %}">
+                                                    {{ loop.index }}º
+                                                </span>
+                                            </td>
+                                            <td>{{ produto.codigo }}</td>
+                                            <td>{{ produto.nome }}</td>
+                                            <td>
+                                                <strong>{{ produto.quantidade_vendida }}</strong>
+                                            </td>
+                                            <td>R$ {{ "%.2f"|format(produto.valor_total) }}</td>
+                                            <td>R$ {{ "%.2f"|format(produto.preco_medio) }}</td>
+                                            <td>{{ produto.numero_vendas }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Controles de Paginação Inferior -->
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="text-muted">
+                                Mostrando <span id="itensVisiveis">0</span> de <span id="totalItens">0</span> produtos
+                            </div>
+                            <div id="controlesNavegacao" class="d-flex gap-2">
+                                <button id="btnAnterior" class="btn btn-outline-primary btn-sm" disabled>
+                                    <i class="fas fa-chevron-left"></i> Anterior
+                                </button>
+                                <button id="btnProximo" class="btn btn-outline-primary btn-sm" disabled>
+                                    Próximo <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Informações da Página -->
+                        <div id="infoPaginacao" class="text-center mt-2"></div>
+
+                        <!-- Gráfico de barras simples -->
+                        <div class="mt-4">
+                            <h6>Visualização Gráfica</h6>
+                            <div class="row">
+                                {% for produto in relatorio.produtos[:10] %}
+                                    <div class="col-12 mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3" style="width: 200px; font-size: 0.9em;">
+                                                {{ produto.nome[:30] }}{% if produto.nome|length > 30 %}...{% endif %}
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar bg-success" 
+                                                         style="width: {{ (produto.quantidade_vendida / relatorio.produtos[0].quantidade_vendida * 100) }}%">
+                                                        {{ produto.quantidade_vendida }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhum produto vendido encontrado</h5>
+                            <p class="text-muted">Ajuste os filtros para visualizar produtos vendidos.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function exportarCSV() {
+    exportarCSVMelhorado('tabelaProdutos', 'relatorio_produtos_mais_vendidos.csv');
+}
+
+// Inicializar paginação quando o documento estiver carregado
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar se existem produtos para paginar
+    const tabela = document.getElementById('tabelaProdutos');
+    if (tabela && tabela.querySelector('tbody tr')) {
+        // Inicializar sistema de paginação
+        const pagination = new TablePagination({
+            tableId: 'tabelaProdutos',
+            itemsPerPageId: 'itensPorPagina',
+            searchId: 'buscaPrincipal',
+            visibleCountId: 'itensVisiveis',
+            totalCountId: 'totalItens',
+            prevBtnId: 'btnAnterior',
+            nextBtnId: 'btnProximo',
+            paginationControlsId: 'controlesNavegacao',
+            pageInfoId: 'infoPaginacao',
+            defaultItemsPerPage: 10,
+            searchFields: ['codigo', 'nome', 'quantidade_vendida']
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,797 @@
+/* AutoPeças Pro - Tema Automotivo Profissional */
+
+/* Paleta de Cores Automotiva */
+:root {
+    --primary-dark: #1a237e;        /* Azul escuro profissional */
+    --primary-blue: #2962ff;        /* Azul vibrante */
+    --accent-orange: #ff6d00;       /* Laranja energia */
+    --accent-red: #d32f2f;          /* Vermelho intenso */
+    --neutral-dark: #37474f;        /* Cinza escuro metal */
+    --neutral-medium: #546e7a;      /* Cinza médio */
+    --neutral-light: #eceff1;       /* Cinza claro */
+    --success: #2e7d32;            /* Verde sucesso */
+    --warning: #f57c00;            /* Laranja alerta */
+    --danger: #c62828;             /* Vermelho perigo */
+    --gradient-primary: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+    --gradient-accent: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-red) 100%);
+    --gradient-neutral: linear-gradient(135deg, var(--neutral-dark) 0%, var(--neutral-medium) 100%);
+}
+
+/* Animações Personalizadas */
+@keyframes slideInFromLeft {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInFromRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes glow {
+    from { box-shadow: 0 0 5px var(--accent-orange); }
+    to { box-shadow: 0 0 20px var(--accent-orange), 0 0 30px var(--accent-orange); }
+}
+
+/* Componentes Específicos de Autopeças */
+
+/* Badge de Categoria de Peça */
+.automotive-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-motor { background: var(--gradient-accent); color: white; }
+.badge-freios { background: var(--gradient-primary); color: white; }
+.badge-suspensao { background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%); color: white; }
+.badge-eletrica { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; }
+.badge-pneus { background: var(--gradient-neutral); color: white; }
+
+/* Cards de Produto Automotivo */
+.automotive-product-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    background: white;
+    overflow: hidden;
+    position: relative;
+}
+
+.automotive-product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-accent);
+}
+
+/* Hover apenas para cards clicáveis/funcionais */
+.automotive-product-card.clickable {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.automotive-product-card.clickable:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
+
+.automotive-product-card .card-body {
+    padding: 25px;
+}
+
+.automotive-product-card .product-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 15px;
+    background: var(--gradient-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    margin-bottom: 15px;
+}
+
+.automotive-product-card .product-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-orange);
+}
+
+.automotive-product-card .product-stock {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Indicadores de Status de Estoque */
+.stock-indicator {
+    position: relative;
+    display: inline-block;
+}
+
+.stock-indicator::before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    top: 50%;
+    left: -15px;
+    transform: translateY(-50%);
+}
+
+.stock-high::before { background-color: var(--success); }
+.stock-medium::before { background-color: var(--warning); }
+.stock-low::before { background-color: var(--danger); animation: pulse 2s infinite; }
+
+/* Botões Especiais Automotivos */
+.btn-automotive {
+    border: none;
+    border-radius: 25px;
+    padding: 12px 30px;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-automotive-primary {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.btn-automotive-primary:hover {
+    background: var(--gradient-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 109, 0, 0.3);
+    color: white;
+}
+
+.btn-automotive-secondary {
+    background: var(--gradient-neutral);
+    color: white;
+}
+
+.btn-automotive-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(55, 71, 79, 0.3);
+    color: white;
+}
+
+/* Formulários Temáticos */
+.automotive-form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    padding: 15px 20px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.automotive-form-control:focus {
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 0 0.2rem rgba(255, 109, 0, 0.25);
+}
+
+/* Tabelas Temáticas */
+.automotive-table {
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.automotive-table thead {
+    background: var(--gradient-neutral);
+    color: white;
+}
+
+.automotive-table tbody tr {
+    border-bottom: 1px solid rgba(255, 109, 0, 0.1);
+    /* Removido hover desnecessário das linhas da tabela */
+}
+
+/* Alertas Personalizados */
+.automotive-alert {
+    border: none;
+    border-radius: 18px;
+    padding: 20px;
+    border-left: 5px solid;
+}
+
+.automotive-alert-success {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    border-left-color: var(--success);
+    color: var(--success);
+}
+
+.automotive-alert-warning {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border-left-color: var(--warning);
+    color: var(--warning);
+}
+
+.automotive-alert-danger {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    border-left-color: var(--danger);
+    color: var(--danger);
+}
+
+/* Loading Spinner Automotivo */
+.automotive-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 109, 0, 0.1);
+    border-left-color: var(--accent-orange);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Modo Escuro Automotivo */
+@media (prefers-color-scheme: dark) {
+    .automotive-product-card {
+        background: #2d2d2d;
+        color: #f0f0f0;
+    }
+    
+    .automotive-table tbody tr:hover {
+        background: rgba(255, 109, 0, 0.15);
+    }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .automotive-product-card {
+        margin-bottom: 20px;
+    }
+    
+    .automotive-product-card .product-image {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .automotive-product-card .product-price {
+        font-size: 1.2rem;
+    }
+    
+    .btn-automotive {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Efeitos Especiais */
+.glow-effect {
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+.slide-in-left {
+    animation: slideInFromLeft 0.5s ease-out;
+}
+
+.slide-in-right {
+    animation: slideInFromRight 0.5s ease-out;
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Ícones Automotivos Personalizados */
+.automotive-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    background: var(--gradient-accent);
+    color: white;
+    font-size: 1.5rem;
+    margin-right: 15px;
+}
+
+.automotive-icon.large {
+    width: 80px;
+    height: 80px;
+    font-size: 2.5rem;
+}
+
+.automotive-icon.small {
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
+    margin-right: 8px;
+}
+
+/* Botão de Orçamento Especial */
+.btn-orcamento {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border: none;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-orcamento:hover {
+    background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(44, 62, 80, 0.3);
+}
+
+.btn-orcamento:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-orcamento:hover:before {
+    left: 100%;
+}
+
+/* Estilos para Logos - hover apenas funcional */
+.login-logo {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.login-logo:hover {
+    filter: brightness(1.1);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.sidebar-logo {
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px;
+}
+
+.sidebar-logo:hover {
+    filter: brightness(1.1);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Responsividade das logos */
+@media (max-width: 768px) {
+    .login-logo {
+        max-height: 80px !important;
+        max-width: 180px !important;
+    }
+    
+    .sidebar-logo {
+        max-height: 60px !important;
+        max-width: 120px !important;
+    }
+}
+
+/* === LAYOUT COMPACTO === */
+/* Reduzindo padding e margens gerais para layout mais compacto */
+
+/* Cards compactos */
+.card {
+    margin-bottom: 15px !important; /* Reduzido de padrão */
+}
+
+.card-body {
+    padding: 15px !important; /* Reduzido de 20px padrão */
+}
+
+.dashboard-card .card-body {
+    padding: 12px !important; /* Ainda mais compacto para dashboard */
+}
+
+.dashboard-card h3 {
+    font-size: 1.5rem !important; /* Reduzido */
+    margin-bottom: 5px !important;
+}
+
+.dashboard-card p {
+    font-size: 0.85rem !important; /* Reduzido */
+}
+
+.dashboard-card .fa-3x {
+    font-size: 2rem !important; /* Reduzido de 3rem */
+}
+
+/* Botões de ação rápida mais compactos */
+.btn-lg {
+    padding: 8px 12px !important; /* Reduzido significativamente */
+}
+
+.btn-lg .fa-2x {
+    font-size: 1.3rem !important; /* Reduzido */
+    margin-bottom: 4px !important;
+}
+
+.btn-lg small {
+    font-size: 0.75rem !important; /* Reduzido */
+}
+
+/* Container principal mais compacto */
+.container-fluid {
+    padding: 10px !important; /* Reduzido de padrão */
+}
+
+/* Rows mais compactas */
+.row {
+    margin-bottom: 15px !important; /* Reduzido */
+}
+
+.mb-3 {
+    margin-bottom: 10px !important; /* Reduzido */
+}
+
+.mb-4 {
+    margin-bottom: 15px !important; /* Reduzido */
+}
+
+/* Navbar mais compacta */
+.navbar {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+}
+
+/* Sidebar mais compacta */
+.sidebar .nav-link {
+    padding: 8px 15px !important; /* Reduzido de 15px 20px */
+    margin: 2px 10px !important; /* Reduzido */
+}
+
+.sidebar .brand-section {
+    margin: 10px !important; /* Reduzido de 15px */
+    padding: 15px !important; /* Reduzido de 20px */
+}
+
+/* Tabelas mais compactas */
+.table td,
+.table th {
+    padding: 6px 8px !important; /* Reduzido do padrão */
+    font-size: 0.9rem !important;
+}
+
+/* Formulários mais compactos */
+.form-control {
+    padding: 6px 10px !important; /* Reduzido */
+    font-size: 0.9rem !important;
+}
+
+.automotive-form-control {
+    padding: 10px 15px !important; /* Reduzido de 15px 20px */
+}
+
+/* Alertas mais compactos */
+.alert {
+    padding: 10px 15px !important; /* Reduzido */
+    margin-bottom: 10px !important;
+}
+
+/* Reduzindo altura dos elementos de ação */
+.py-3 {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+}
+
+/* Cards de ação mais compactos */
+.col-lg-2 .btn,
+.col-md-3 .btn,
+.col-sm-4 .btn,
+.col-6 .btn {
+    min-height: 70px !important; /* Altura mínima reduzida */
+}
+
+/* Espaçamento entre seções reduzido */
+.card-header {
+    padding: 10px 15px !important; /* Reduzido */
+}
+
+.card-header h5 {
+    font-size: 1rem !important; /* Reduzido */
+    margin-bottom: 0 !important;
+}
+
+/* Responsividade aprimorada para layout compacto */
+@media (min-width: 992px) {
+    .col-lg-2 {
+        flex: 0 0 auto;
+        width: 16.66666667%; /* Ajuste para melhor aproveitamento */
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-card h3 {
+        font-size: 1.3rem !important;
+    }
+    
+    .btn-lg {
+        padding: 6px 8px !important;
+        min-height: 60px !important;
+    }
+    
+    .card-body {
+        padding: 10px !important;
+    }
+}
+
+/* Ajustes específicos para produtos recentes e alertas */
+.card:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Otimização de altura de linha */
+body {
+    line-height: 1.3 !important; /* Reduzido de 1.5 padrão */
+}
+
+/* Melhor aproveitamento do espaço vertical */
+.main-content {
+    padding-top: 10px !important;
+}
+
+/* === AJUSTES EXTRAS PARA MÁXIMA COMPACTAÇÃO === */
+
+/* Reduzindo ainda mais os cards do dashboard */
+.dashboard-card {
+    min-height: 90px !important; /* Altura mínima reduzida */
+}
+
+.dashboard-card .card-body {
+    padding: 8px 12px !important; /* Ainda mais compacto */
+}
+
+.dashboard-card h3 {
+    font-size: 1.4rem !important;
+    line-height: 1.1 !important;
+}
+
+.dashboard-card p {
+    font-size: 0.8rem !important;
+    margin-bottom: 3px !important;
+}
+
+.dashboard-card .fa-3x {
+    font-size: 1.8rem !important; /* Menor ainda */
+}
+
+.dashboard-card .mt-3 {
+    margin-top: 8px !important;
+}
+
+.dashboard-card .pt-2 {
+    padding-top: 4px !important;
+}
+
+.dashboard-card small {
+    font-size: 0.7rem !important;
+}
+
+/* Centro de controle mais compacto */
+.card-header h5 {
+    font-size: 0.95rem !important;
+}
+
+/* Botões de ação ainda mais compactos */
+.btn-lg {
+    padding: 6px 8px !important;
+    min-height: 65px !important; /* Reduzido novamente */
+}
+
+.btn-lg .fa-2x {
+    font-size: 1.2rem !important;
+    margin-bottom: 2px !important;
+}
+
+.btn-lg small {
+    font-size: 0.7rem !important;
+    line-height: 1.1 !important;
+}
+
+/* Colunas mais eficientes */
+@media (min-width: 1200px) {
+    .col-lg-2 {
+        max-width: 15% !important;
+    }
+}
+
+/* Espaçamento entre elementos reduzido ao mínimo */
+.row.mb-4 {
+    margin-bottom: 10px !important;
+}
+
+.mb-3 {
+    margin-bottom: 8px !important;
+}
+
+/* Seções específicas do dashboard */
+.text-center .col-lg-2,
+.text-center .col-md-3,
+.text-center .col-sm-4,
+.text-center .col-6 {
+    padding: 2px !important; /* Reduzido padding das colunas */
+}
+
+/* Alertas e produtos recentes compactos */
+.card:not(.dashboard-card) .card-body {
+    padding: 12px !important;
+}
+
+/* Ajuste final para aproveitar melhor a tela */
+@media (min-width: 992px) {
+    .container-fluid {
+        max-width: 100% !important;
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+    }
+}
+
+/* Estilos para botões de exportação de relatórios */
+.export-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.export-buttons .btn {
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.export-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.export-buttons .btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    color: white;
+}
+
+.export-buttons .btn-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #1ea47b 100%);
+}
+
+.export-buttons .btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    border: none;
+    color: white;
+}
+
+.export-buttons .btn-danger:hover {
+    background: linear-gradient(135deg, #c82333 0%, #c0392b 100%);
+}
+
+.export-buttons .btn i {
+    margin-right: 5px;
+}
+
+/* Efeito de loading para exportação */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: button-loading-spinner 1s ease infinite;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+@keyframes button-loading-spinner {
+    from {
+        transform: rotate(0turn);
+    }
+    to {
+        transform: rotate(1turn);
+    }
+}
+
+/* Responsividade para botões de exportação */
+@media (max-width: 768px) {
+    .export-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .export-buttons .btn {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+}
+
+/* Melhorias visuais para tabelas de relatórios */
+.relatorio-table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.relatorio-table thead th {
+    background: var(--gradient-primary);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 12px 8px;
+}
+
+.relatorio-table tbody tr:hover {
+    background-color: rgba(41, 98, 255, 0.05);
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+}
+
+.relatorio-table tbody td {
+    padding: 10px 8px;
+    vertical-align: middle;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Cards de resumo de relatórios */
+.relatorio-card {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.relatorio-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.relatorio-card .card-header {
+    background: var(--gradient-neutral);
+    color: white;
+    border: none;
+    padding: 15px 20px;
+}
+
+.relatorio-card .card-body {
+    padding: 20px;
+}
